@@ -1,0 +1,1 @@
+#S: serine, Y:tyrosine, T:threoine
