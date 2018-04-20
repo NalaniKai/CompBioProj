@@ -1,8 +1,27 @@
 #S: serine, Y:tyrosine, T:threoine
 #Nalani
+import random
 
-def findPhosSites(sequence):
+def findPhosSites(sequences):
+    for i in range(len(sequences) + 3):
+        r = random.randint(0, len(sequences)-1)
+        s = sequences[r]
+        motif = []
+        for aminoAcid in s:
+            #phosphorolation sites
+            if aminoAcid == 'S' or aminoAcid == 'Y' or aminoAcid == 'T':
+                motif = getMotif(s, aminoAcid)
+                break
     return
+
+def getMotif(seq, aminoAcid):
+    i = seq.index(aminoAcid)
+    front = 0
+    back = 0
+    while ((i-front) < 0) or ((i+back) >= len(seq))
+        front = random.randint(0,5)
+        back = random.randint(0,5)
+    return seq[i-front:i+back]
 
 def isHeader(line):
     if (line[0] == '>'):
@@ -17,6 +36,7 @@ def isHeader(line):
 def convertFileToSequences(filename):
     #all NT of sequences
     seqs = []
+    headers = []
 
     # read file for NT ends
     with open(filename) as f:       
@@ -27,6 +47,7 @@ def convertFileToSequences(filename):
             tempSeq = ""
             i = line.index('(')
             NT_end = int(line[i+1:len(line)-2])
+            headers.append(line)
             line = f.readline()
             if not line:
                 break
@@ -42,4 +63,5 @@ def convertFileToSequences(filename):
 
     return seqs
 
-convertFileToSequences("test_file_parse.txt")
+seqs = convertFileToSequences("test_file_parse.txt")
+findPhosSites(seqs)
