@@ -39,13 +39,7 @@ j = aaText.find(">", 0, len(aaText))
 numAA = 0
 n = 1
 for i in range(len(aaText)):
-    if aaText.find(">", i, len(aaText)) != -1:
-        numAA += 1
-for i in range(len(aaText)):
-#    for j in range(0, len(aaText), j + aaText.find(">", j, len(aaText))):
-#    while j < len(d):
     if i in d:
         print("\nDNA sequence from amino acid sequence {}: ".format(n), motif_functions.amino2bases(d[i]))
-#            j += aaText.find(">", i, len(aaText))
         n += 1
 
