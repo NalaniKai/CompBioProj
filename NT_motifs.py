@@ -35,11 +35,9 @@ isolateAminoAcidSequences()#Each amino acid sequence is now in d
 #print("d = ", d)
 
 #Convert amino acid sequences to RNA
-j = aaText.find(">", 0, len(aaText))
 numAA = 0
 n = 1
 for i in range(len(aaText)):
     if i in d:
         print("\nDNA sequence from amino acid sequence {}: ".format(n), motif_functions.amino2bases(d[i]))
         n += 1
-
