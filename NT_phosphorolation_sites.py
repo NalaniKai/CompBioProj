@@ -2,6 +2,7 @@
 #Nalani
 import random
 
+'''
 def findPhosSites(sequences):
     for i in range(len(sequences) + 3):
         r = random.randint(0, len(sequences)-1)
@@ -22,6 +23,7 @@ def getMotif(seq, aminoAcid):
         front = random.randint(0,5)
         back = random.randint(0,5)
     return seq[i-front:i+back]
+'''
 
 def isHeader(line):
     if (line[0] == '>'):
@@ -47,7 +49,7 @@ def convertFileToSequences(filename):
             tempSeq = ""
             i = line.index('(')
             NT_end = int(line[i+1:len(line)-2])
-            headers.append(line)
+            headers.append(line[:len(line)-1])
             line = f.readline()
             if not line:
                 break
@@ -60,8 +62,9 @@ def convertFileToSequences(filename):
             seqs.append(tempSeq[:NT_end])
 
     print(seqs)
+    print(headers)
 
-    return seqs
+    return seqs, headers
 
-seqs = convertFileToSequences("test_file_parse.txt")
-findPhosSites(seqs)
+seqs, headers = convertFileToSequences("test_file_parse.txt")
+#findPhosSites(seqs)
