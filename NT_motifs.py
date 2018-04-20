@@ -7,6 +7,8 @@
 #Locate the N terminus - it's at the beginning of the amino acid sequence
 #Run algorithm to find motifs
 
+import motif_functions
+
 aaFile = open("amino_acids.txt", "r")
 aaText = aaFile.read()
 d = {}
@@ -30,4 +32,9 @@ def isolateAminoAcidSequences():#x, y):#aaString):
     print("\n\n\n")
 
 isolateAminoAcidSequences()#Each amino acid sequence is now in d
-print(d)
+#print("d = ", d)
+
+#Convert amino acid sequences to DNA
+for i in range(len(aaText)):
+    if i in d:
+        print("\nDNA sequence from amino acid sequence: ", motif_functions.amino2bases(d[i]))

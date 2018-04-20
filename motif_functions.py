@@ -389,7 +389,7 @@ def analyzeHaspins(filename, aminoMotifLength, numberRuns, amino):
     instances = findBestMotif(nucSeqs, aminoMotifLength*3, numberRuns, amino, False)
 
         
-analyzeHaspins("ceHaspins_CloseRelatives_ExpressionList.txt", 10, 100, True)
-    
+#analyzeHaspins("ceHaspins_CloseRelatives_ExpressionList.txt", 10, 100, True)
+
     
 
