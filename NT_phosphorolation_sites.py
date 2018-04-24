@@ -3,26 +3,64 @@
 import random
 import math
 
-def hertzStormo(aminoAcid, singleton, seqs):
+def hertzStormo(aminoAcid, singleton, singletonSeq, singletonI, seqs, headers):
     size = len(singleton)
     nMerSet = []
     nMerSet.append(singleton)
     #get initial profile for the chosen singleton
     profile = createProfile(size, nMerSet)
 
-    for s in seqs:
-        i = 0
-        while i != -1:
-            i = s.index(aminoAcid, i)
-            if i != -1:
-                for x in range(size):
-                    temp = [singleton]
-                    temp.append(s[i-x:i+size-x])
-                    tempProfile = createProfile(size, temp)
-                    val = getIC(tempProfile)
+    bestIC = 0.0
+    bestSet = [singleton]
+    bestHeaders = [headers[singletonSeq]]
+    bestLocations = [singletonI]
+
+    doneSeqs = [singletonSeq]
+
+    for x in range(len(seqs)-1):
+        addIC, addSet, addHeaders, addLocations, addSeq = iteration(seqs, headers, bestSet, doneSeqs, aminoAcid, size)
+        bestHeaders.append(addHeaders)
+        bestIC = addIC
+        bestLocations.append(addLocations)
+        bestSet.append(addSet)
+        doneSeqs.append(addSeq)
+
+    print("best ", bestIC)
+    print("best set ", bestSet)     
+    print("best headers ", bestHeaders)  
+    print("done seq ", doneSeqs)  
+
+def iteration(seqs, headers, currentSet, doneSeqs, aminoAcid, size):    
+    bestNMer = ""
+    bestHeader = ""
+    bestLocation = ""
+    bestIC = 0.0
+    bestSeq = 0
+    for s in range(len(seqs)):
+        if s not in doneSeqs:
+            i = 0                
+            while i != -1:
+                i = seqs[s].find(aminoAcid, i+1)
+                if i != -1:
+                    for x in range(size):
+                        if i-x >= 0 and i+size-x < len(seqs[s]):
+                            temp = []
+                            for c in currentSet:
+                                temp.append(c)
+                            temp.append(seqs[s][i-x:i+size-x])
+                            tempProfile = createProfile(size, temp)
+                            val = getIC(tempProfile)
+                            if val > bestIC:
+                                bestIC = val
+                                bestNMer = seqs[s][i-x:i+size-x]
+                                bestHeader = headers[s]                            
+                                bestLocation = i-x
+                                bestSeq = s
+    return bestIC, bestNMer, bestHeader, bestLocation, bestSeq
 
 def getIC(profile):
-    background = [.085, .095, .07, .01, .06, .095, .06, .02, .005, .04, .05, .06, .03, .03, .04, .06, .05, .02, .06, .06]    
+    #background = [.085, .095, .07, .01, .06, .095, .06, .02, .005, .04, .05, .06, .03, .03, .04, .06, .05, .02, .06, .06]    
+    background = [.05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05]    
     i = 0
     for col in range(len(profile[0])):        
         for row in range(len(profile)):
@@ -95,19 +133,25 @@ def findPhosSiteMotif(sequences, headers):
         r = random.randint(0, seqsLen-1)
         s = sequences[r]     
         if len(s) > 3:
-            for aminoAcid in s:                
+            for aminoAcid in range(len(s)):                
                 #phosphorolation sites
-                if aminoAcid == 'S' or aminoAcid == 'Y' or aminoAcid == 'T':
-                    motif = getMotif(s, aminoAcid)
+                if s[aminoAcid] == 'S' or s[aminoAcid] == 'Y' or s[aminoAcid] == 'T':
+                    motif = getMotif(s, s[aminoAcid])
                     l = len(motif)
                     if l > 4:
                         motifSeqs = []
                         motifHeaders = []
-                        for i in range(len(sequences)):
-                            if len(sequences[i]) >= l:
-                                motifSeqs.append(sequences[i])
-                                motifHeaders.append(headers[i])
-                        return aminoAcid, motif, motifSeqs, motifHeaders    
+                        motifSeq = 0
+                        unaccounted = 0
+                        for x in range(seqsLen):
+                            if len(sequences[x]) >= l:                                                                                                                                                            
+                                motifSeqs.append(sequences[x])
+                                motifHeaders.append(headers[x])
+                                if s == sequences[x]:                                    
+                                    motifSeq = x-unaccounted                                
+                            else:
+                                unaccounted += 1
+                        return s[aminoAcid], motif, motifSeq, aminoAcid, motifSeqs, motifHeaders    
     return None, None, None
 
 def getMotif(seq, aminoAcid):
@@ -194,6 +238,6 @@ def convertFileToSequences(filename):
 
 seqs, headers = convertFileToSequences("new_amino_acids.txt")
 #getNumPhosphorolationSites(seqs)
-aminoAcid, motif, seqs, headers = findPhosSiteMotif(seqs, headers)
+aminoAcid, motif, motifSeq, motifI, seqs, headers = findPhosSiteMotif(seqs, headers)
 print(motif)
-hertzStormo(aminoAcid, motif, seqs)
+hertzStormo(aminoAcid, motif, motifSeq, motifI, seqs, headers)
