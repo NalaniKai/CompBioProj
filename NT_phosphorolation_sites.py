@@ -2,21 +2,49 @@
 #Nalani
 import random
 
-def findPhosSiteMotif(sequences):
-    for i in range(len(sequences) + 3):
-        r = random.randint(0, len(sequences)-1)
-        s = sequences[r]
-        for aminoAcid in s:
-            #phosphorolation sites
-            if aminoAcid == 'S' or aminoAcid == 'Y' or aminoAcid == 'T':
-                return getMotif(s, aminoAcid)
-    return
+def hertzStormo(singleton, seqs):
+    size = len(singleton)
+    profile = createProfile(size, seqs)
+
+def createProfile(numCols, seqs):
+     table = []
+     row = 0
+     # create 2D table initialized with value
+     while (row < numRows):
+          table.append([])    
+          col = 0
+          while (col < numCols):
+               table[row].append(value)
+               col = col + 1
+          row = row + 1
+     return table
+
+def findPhosSiteMotif(sequences, headers):    
+    seqsLen = len(sequences)
+    for i in range(seqsLen + 3):
+        r = random.randint(0, seqsLen-1)
+        s = sequences[r]     
+        if len(s) > 3:
+            for aminoAcid in s:                
+                #phosphorolation sites
+                if aminoAcid == 'S' or aminoAcid == 'Y' or aminoAcid == 'T':
+                    motif = getMotif(s, aminoAcid)
+                    l = len(motif)
+                    if l > 4:
+                        motifSeqs = []
+                        motifHeaders = []
+                        for i in range(len(sequences)):
+                            if len(sequences[i]) >= l:
+                                motifSeqs.append(sequences[i])
+                                motifHeaders.append(headers[i])
+                        return motif, motifSeqs, motifHeaders    
+    return None, None, None
 
 def getMotif(seq, aminoAcid):
     i = seq.index(aminoAcid)
-    front = 0
-    back = 0
-    while ((i-front) < 0) or ((i+back) >= len(seq)):
+    front = 500
+    back = 500
+    while ((i-front) < 2) or ((i+back) >= len(seq)):
         front = random.randint(0,5)
         back = random.randint(0,5)
     return seq[i-front:i+back]
@@ -92,11 +120,9 @@ def convertFileToSequences(filename):
         
             seqs.append(tempSeq[:NT_end])
 
-    print(seqs)
-    print(headers)
-
     return seqs, headers
 
-seqs, headers = convertFileToSequences("test_file_parse.txt")
-getNumPhosphorolationSites(seqs)
-motif = findPhosSiteMotif(seqs)
+seqs, headers = convertFileToSequences("new_amino_acids.txt")
+#getNumPhosphorolationSites(seqs)
+motif, seqs, headers = findPhosSiteMotif(seqs, headers)
+print(motif)
