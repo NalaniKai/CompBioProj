@@ -2,16 +2,14 @@
 #Nalani
 import random
 
-def findPhosSites(sequences):
+def findPhosSiteMotif(sequences):
     for i in range(len(sequences) + 3):
         r = random.randint(0, len(sequences)-1)
         s = sequences[r]
-        motif = []
         for aminoAcid in s:
             #phosphorolation sites
             if aminoAcid == 'S' or aminoAcid == 'Y' or aminoAcid == 'T':
-                motif = getMotif(s, aminoAcid)
-                break
+                return getMotif(s, aminoAcid)
     return
 
 def getMotif(seq, aminoAcid):
@@ -101,4 +99,4 @@ def convertFileToSequences(filename):
 
 seqs, headers = convertFileToSequences("test_file_parse.txt")
 getNumPhosphorolationSites(seqs)
-#findPhosSites(seqs)
+motif = findPhosSiteMotif(seqs)
