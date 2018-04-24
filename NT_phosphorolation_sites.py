@@ -1,23 +1,93 @@
 #S: serine, Y:tyrosine, T:threoine
 #Nalani
 import random
+import math
 
-def hertzStormo(singleton, seqs):
+def hertzStormo(aminoAcid, singleton, seqs):
     size = len(singleton)
-    profile = createProfile(size, seqs)
+    nMerSet = []
+    nMerSet.append(singleton)
+    #get initial profile for the chosen singleton
+    profile = createProfile(size, nMerSet)
 
+    for s in seqs:
+        i = 0
+        while i != -1:
+            i = s.index(aminoAcid, i)
+            if i != -1:
+                for x in range(size):
+                    temp = [singleton]
+                    temp.append(s[i-x:i+size-x])
+                    tempProfile = createProfile(size, temp)
+                    val = getIC(tempProfile)
+
+def getIC(profile):
+    background = [.085, .095, .07, .01, .06, .095, .06, .02, .005, .04, .05, .06, .03, .03, .04, .06, .05, .02, .06, .06]    
+    i = 0
+    for col in range(len(profile[0])):        
+        for row in range(len(profile)):
+            check = profile[row][col]
+            if check > 0.0:
+                i += check * math.log(check/background[row])
+    return i
+                    
 def createProfile(numCols, seqs):
-     table = []
-     row = 0
-     # create 2D table initialized with value
-     while (row < numRows):
-          table.append([])    
-          col = 0
-          while (col < numCols):
-               table[row].append(value)
-               col = col + 1
-          row = row + 1
-     return table
+    profile = []  
+    for col in range(numCols):            
+        avgs = getAvg(seqs, col)
+        profile.append(avgs)
+    return profile
+
+def getAvg(seqs, col):
+    avgs = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+    for s in seqs:
+        aminoAcid = s[col]
+        if aminoAcid == 'G':
+            avgs[0] += 1
+        elif aminoAcid == 'A':
+            avgs[1] += 1
+        elif aminoAcid == 'V':
+            avgs[2] += 1
+        elif aminoAcid == 'C':
+            avgs[3] += 1
+        elif aminoAcid == 'P':
+            avgs[4] += 1
+        elif aminoAcid == 'L':
+            avgs[5] += 1
+        elif aminoAcid == 'I':
+            avgs[6] += 1
+        elif aminoAcid == 'M':
+            avgs[7] += 1
+        elif aminoAcid == 'W':
+            avgs[8] += 1
+        elif aminoAcid == 'F':
+            avgs[9] += 1
+        elif aminoAcid == 'S':
+            avgs[10] += 1
+        elif aminoAcid == 'T':
+            avgs[11] += 1
+        elif aminoAcid == 'Y':
+            avgs[12] += 1
+        elif aminoAcid == 'N':
+            avgs[13] += 1
+        elif aminoAcid == 'Q':
+            avgs[14] += 1
+        elif aminoAcid == 'K':
+            avgs[15] += 1
+        elif aminoAcid == 'R':
+            avgs[16] += 1
+        elif aminoAcid == 'H':
+            avgs[17] += 1
+        elif aminoAcid == 'D':
+            avgs[18] += 1
+        elif aminoAcid == 'E':
+            avgs[19] += 1
+        else:
+            print(aminoAcid, " is not accounted for")
+
+    for i in range(20):
+        avgs[i] = avgs[i]/len(seqs)
+    return avgs
 
 def findPhosSiteMotif(sequences, headers):    
     seqsLen = len(sequences)
@@ -37,7 +107,7 @@ def findPhosSiteMotif(sequences, headers):
                             if len(sequences[i]) >= l:
                                 motifSeqs.append(sequences[i])
                                 motifHeaders.append(headers[i])
-                        return motif, motifSeqs, motifHeaders    
+                        return aminoAcid, motif, motifSeqs, motifHeaders    
     return None, None, None
 
 def getMotif(seq, aminoAcid):
@@ -124,5 +194,6 @@ def convertFileToSequences(filename):
 
 seqs, headers = convertFileToSequences("new_amino_acids.txt")
 #getNumPhosphorolationSites(seqs)
-motif, seqs, headers = findPhosSiteMotif(seqs, headers)
+aminoAcid, motif, seqs, headers = findPhosSiteMotif(seqs, headers)
 print(motif)
+hertzStormo(aminoAcid, motif, seqs)
