@@ -31,7 +31,6 @@ def convertFileToSequence(filename):
     sequence = sequence.replace("\n", "")
     return sequence
 
-
 ########################################################
 # translate -- translate each DNA codon to the corresponding
 # single letter amino acid sequence
@@ -129,205 +128,275 @@ def translate(inputfile, outputfile):
     out.close()
 
 
-######################################################################
-# localAlignmentScore
-# @param s1 the first DNA sequence as a string
-# @param s2 the second DNA sequence as a string
-# @return the maximum score in the cost table
-#
-# Determine the score of the optimal local alignment of two strings
-######################################################################
-def localAlignmentScore(s1, s2):
-    
-    # Scoring system
-    MATCH = 5
-    MISMATCH = -4
-    GAP = -6
-                
-    # set table size
-    NUM_ROWS = len(s2)+1
-    NUM_COLS = len(s1)+1
-                
-    # Create table and fill it with zeros
-    costs = createTable(NUM_ROWS, NUM_COLS, 0)
-                
-    # Create table for getting back the optimal alignment, fill table with "A"
-    # Suggest you use "D", "L", and "T" for diagonal, left, and top
-    directions = createTable(NUM_ROWS, NUM_COLS, "A")
-                
-    # set the first position in the directions table to "F"
-    directions[0][0] = "F"
-                
-    maxValue = 0
-    maxRowPos = 0
-    maxColPos = 0
-                            
-    for i in range(1, NUM_ROWS):
-        costs[i][0] = 0
-        directions[i][0] = "F"
-                                    
-    for i in range(1, NUM_COLS):
-        costs[0][i] = 0
-        directions[0][i] = "F"
-                                            
-    for i in range(1, NUM_ROWS):
-        for j in range(1, NUM_COLS):
-            if s2[i-1] == s1[j-1]:
-                costs[i][j] = max(0, costs[i][j-1] + GAP, costs[i-1][j] + GAP, costs[i-1][j-1] + MATCH)
-                if costs[i][j] == 0:
-                    directions[i][j] = "F"
-                elif costs[i][j] == costs[i][j-1] + GAP:
-                    directions[i][j] = "L"
-                elif costs[i][j] == costs[i-1][j] + GAP:
-                    directions[i][j] = "T"
-                else:
-                    directions[i][j] = "D"
-            else:
-                costs[i][j] = max(0, costs[i][j-1] + GAP, costs[i-1][j] + GAP, costs[i-1][j-1] + MISMATCH)
-                if costs[i][j] == 0:
-                    directions[i][j] = "F"
-                elif costs[i][j] == costs[i][j-1] + GAP:
-                    directions[i][j] = "L"
-                elif costs[i][j] == costs[i-1][j] + GAP:
-                    directions[i][j] = "T"
-                else:
-                    directions[i][j] = "D"
-            if costs[i][j] > maxValue:
-                maxValue = costs[i][j]
-                maxRowPos = i
-                maxColPos = j
-
-    # Print out table (only useful for small tables - used for debugging)
-    printTable(costs, "costs.txt")
-    printTable(directions, "directions.txt")
-    
-    # find optimal alignment
-    align(directions, s1, s2, maxRowPos, maxColPos, "local_alignment.txt")
-        
-    # return optimal score (lower right-hand cell in table]
-    return costs[maxRowPos][maxColPos]
-
-
-####################################################################
-# createTable
-# Create a 2D table with the given number of rows and columns
-# and fills all entries with value given as a parameter
-# (function completed for you)
-####################################################################
-def createTable(numRows, numCols, value):
-    table = []
-    row = 0
-    # create 2D table initialized with value
-    while (row < numRows):
-        table.append([])
-        col = 0
-        while (col < numCols):
-            table[row].append(value)
-            col = col + 1
-        row = row + 1
-    return table
-
-
 ##################################################################
-# printTable
-# @param table the 2D table
-#
-# Print 2D table to file (only useful for small tables for short
-# strings)
-# Should have tabs between the values on each row
-# Useful function for debugging purposes
-# Students: Complete this function
+# generateSeqsFromFasta - takes a list of FASTA organized sequences
+# and store the sequences in an array
 ##################################################################
-def printTable(table, filename):
-    file = open(filename, "w")
-    for i in range(len(table)):
-        for j in range(len(table[0])):
-            file.write(str(table[i][j]) + "\t")
-        file.write("\n\n")
-    file.close()
-    return
-
-################################################################
-# Reconstruct the optimal alignment and print the alignment
-# to a file. Because the sequences can be long, print the
-# alignment 50 characters on one line, the other string of 50 characters
-# on the next line, and then skip one line, as follows:
-# AATT--GGCTATGCT--C-G-TTACGCA-TTACT-AA-TCCGGTC-AGGC
-# AAATATGG---TGCTGGCTGCTT---CAGTTA-TGAACTCC---CCAGGC
-#
-# TATGGGTGCTATGCTCG--T--TACG-CA
-# TCAT--TGG---TGCTGGCTGCTT--ACA
-#
-# align
-# @param direction the 2D direction table
-# @param s1 the first DNA sequence
-# @param s2 the second DNA sequence
-# @param maxRow the row of the maximum score in the cost table
-# @param maxCol the col of the maximum score in the cost table
-# @filename the name of the output file
-###############################################################
-def align(direction, s1, s2, maxRow, maxCol, filename):
+def generateSeqsFromFasta(filename):
+    # read in file
+    file = open(filename)
     
-    path = direction[maxRow][maxCol]
+    # read in entire file
+    allLines = file.readlines()
+    seqs = []
+    count = -1
     
-    row = maxRow-1
-    col = maxCol-1
-    mRow = maxRow
-    mCol = maxCol
-    index = -1
-                    
-    optimalAlignments1 = ""
-    optimalAlignments2 = ""
-    count = 0
-                                
-    file = open(filename, "w")
-        
-    while path != "F":
-        if path == "D":
-            optimalAlignments1 = s1[col] + optimalAlignments1
-            optimalAlignments2 = s2[row] + optimalAlignments2
+    for i in range(len(allLines)):
+        if(allLines[i][0] == '>'):
+            seqs.append("")
             count += 1
-            path = direction[mRow-1][mCol-1]
-            if path == "F":
-                index = col
-            mRow -= 1
-            mCol -= 1
-            col -= 1
-            row -= 1
-        elif path == "L":
-            optimalAlignments1 = s1[col] + optimalAlignments1
-            optimalAlignments2 = "-" + optimalAlignments2
-            count += 1
-            path = direction[mRow][mCol-1]
-            if path == "F":
-                index = col
-            mCol -= 1
-            col -= 1
         else:
-            optimalAlignments1 = "-" + optimalAlignments1
-            optimalAlignments2 = s2[row] + optimalAlignments2
-            count += 1
-            path = direction[mRow-1][mCol]
-            if path == "F":
-                index = col
-            mRow -= 1
-            row -= 1
-        # print the strings to the output file, 50 characters at a time
-        if (path == "F") or (count % 50 == 0):
-            file.write(optimalAlignments1 + "\n" + optimalAlignments2)
-            file.write("\n\n")
-            count = 0
-            optimalAlignments1 = ""
-            optimalAlignments2 = ""
-                
+            seqs[count] += allLines[i]
+    
+    for i in range(len(seqs)):
+        seqs[i] = seqs[i].replace("\r", "")
+        seqs[i] = seqs[i].replace("\n", "")
+
+#    for i in range(len(seqs)):
+#        print(seqs[i], "\n")
+
+    # close file
     file.close()
-    return
+    
+    return seqs
+
+##################################################################
+# findIndex: finds the leftmost index of each organism
+##################################################################
+def findIndex():
+    translate("human_haspin_FASTA.txt", "human_haspin_amino_acid.txt")
+    human_file = open("human_haspin_amino_acid.txt")
+
+    human_amino_acid = convertFileToSequence("human_haspin_amino_acid.txt")
+    amino_acid = generateSeqsFromFasta("amino_acids.txt")
+
+    print()
+    human = 0
+    human_new = human_amino_acid.find("VCF", human)
+    if human_new == 0:
+        human = 0
+    else:
+        human = len(human_amino_acid)
+    while human != human_new:
+        if human_new < human:
+            human = human_new
+            if human_amino_acid.find("VCF", human) != -1:
+                human_new = human_amino_acid.find("VCF", human)
+    print("human_amino_acid", human)
+
+    C01H6 = 0
+    new_C01H6 = amino_acid[0].find("MST", C01H6)
+    if new_C01H6 == 0:
+        C01H6 = 0
+    else:
+        C01H6 = len(amino_acid[0])
+    while C01H6 != new_C01H6:
+        if new_C01H6 < C01H6:
+            C01H6 = new_C01H6
+            if amino_acid[0].find("MST", C01H6) != -1:
+                new_C01H6 = amino_acid[0].find("MST", C01H6)
+    print("C01H6.9_hasp1_conceptual", C01H6)
+
+    Y18H1A = 0
+    new_Y18H1A = amino_acid[1].find("WMR", Y18H1A)
+    if new_Y18H1A == 0:
+        Y18H1A = 0
+    else:
+        Y18H1A = len(amino_acid[1])
+    while Y18H1A != new_Y18H1A:
+        if new_Y18H1A < Y18H1A:
+            Y18H1A = new_Y18H1A
+            if amino_acid[1].find("WMR", Y18H1A) != -1:
+                new_Y18H1A = amino_acid[1].find("WMR", Y18H1A)
+    print("Y18H1A.10_hasp2_conceptual", Y18H1A)
+
+    H12I13 = 0
+    new_H12I13 = amino_acid[7].find("KCQ", H12I13)
+    if new_H12I13 == 0:
+        H12I13 = 0
+    else:
+        H12I13 = len(amino_acid[7])
+    while H12I13 != new_H12I13:
+        if new_H12I13 < H12I13:
+            H12I13 = new_H12I13
+            if amino_acid[7].find("KCQ", H12I13) != -1:
+                new_H12I13 - amino_acid[7].find("KCQ", H12I13)
+    print("Y18H1A.H12I13.1conceptual", H12I13)
+
+    ZK177 = 0
+    new_ZK177 = amino_acid[2].find("LCI", ZK177)
+    if new_ZK177 == 0:
+        ZK177 = 0
+    else:
+        ZK177 = len(amino_acid[2])
+    while ZK177 != new_ZK177:
+        if new_ZK177 < ZK177:
+            ZK177 = new_ZK177
+            if amino_acid[2].find("LCI", ZK177) != -1:
+                new_ZK177 = amino_acid[2].find("LCI", ZK177)
+    print("ZK177.2conceptual", ZK177)
+
+    F59E12 = 0
+    new_F59E12 = amino_acid[4].find("KCD", F59E12)
+    if new_F59E12 == 0:
+        F59E12 = 0
+    else:
+        F59E12 = len(amino_acid[4])
+    while F59E12 != new_F59E12:
+        if new_F59E12 < F59E12:
+            F59E12 = new_F59E12
+            if amino_acid[4].find("KCD", F59E12) != -1:
+                new_F59E12 = amino_acid[4].find("KCD", F59E12)
+    print("F59E12.6and15_combined", F59E12)
+
+    C55C3 = 0
+    new_C55C3 = amino_acid[9].find("MAW", C55C3)
+    if new_F59E12 == 0:
+        C55C3 = 0
+    else:
+        C55C3 = len(amino_acid[9])
+    while C55C3 != new_C55C3:
+        if new_C55C3 < C55C3:
+            C55C3 = new_C55C3
+            if amino_acid[9].find("MAW", C55C3) != -1:
+                new_C55C3 = amino_acid[9].find("MAW", C55C3)
+    print("C55C3.8conceptual", C55C3)
+
+    Y73B6A = 0
+    new_Y73B6A = amino_acid[5].find("QMM", Y73B6A)
+    if new_Y73B6A == 0:
+        Y73B6A = 0
+    else:
+        Y73B6A = len(amino_acid[5])
+    while Y73B6A != new_Y73B6A:
+        if new_Y73B6A < Y73B6A:
+            Y73B6A = new_Y73B6A
+            if amino_acid[5].find("QMM", Y73B6A) != -1:
+                new_Y73B6A = amino_acid[5].find("QMM", Y73B6A)
+    print("Y73B6A.1aconceptual", Y73B6A)
+
+    C04G2 = 0
+    new_C04G2 = amino_acid[3].find("MSP", C04G2)
+    if new_C04G2 == 0:
+        C04G2 = 0
+    else:
+        C04G2 = len(amino_acid[3])
+    while C04G2 != new_C04G2:
+        if new_C04G2 < C04G2:
+            C04G2 = new_C04G2
+            if amino_acid[3].find("MSP", C04G2) != -1:
+                new_C04G2 = amino_acid[3].find("MSP", C04G2)
+    print("C04G2.10aconceptual", C04G2)
+
+    Y32G9A = 0
+    new_Y32G9A = amino_acid[11].find("MEH", Y32G9A)
+    if new_Y32G9A == 0:
+        Y32G9A = 0
+    else:
+        Y32G9A = len(amino_acid[11])
+    while Y32G9A != new_Y32G9A:
+        if new_Y32G9A < Y32G9A:
+            Y32G9A = new_Y32G9A
+            if amino_acid[11].find("MEH", Y32G9A) != -1:
+                new_Y32G9A = amino_acid[11].find("MEH", Y32G9A)
+    print("Y32G9A.3conceptual", Y32G9A)
+
+    C26E6 = 0
+    new_C26E6 = amino_acid[10].find("MKG", C26E6)
+    if new_C26E6 == 0:
+        C26E6 = 0
+    else:
+        C26E6 = len(amino_acid[10])
+    while C26E6 != new_C26E6:
+        if new_C26E6 < C26E6:
+            C26E6 = new_C26E6
+            if amino_acid[10].find("MKG", C26E6) != -1:
+                new_C26E6 = amino_acid[10].find("MKG", C26E6)
+    print("C26E6.1conceptual", C26E6)
+
+    Y48B6A = 0
+    new_Y48B6A = amino_acid[6].find("KGK", Y48B6A)
+    if new_Y48B6A == 0:
+        Y48B6A = 0
+    else:
+        Y48B6A = len(amino_acid[6])
+    while Y48B6A != new_Y48B6A:
+        if new_Y48B6A < Y48B6A:
+            Y48B6A = new_Y48B6A
+            if amino_acid[6].find("KGK", Y48B6A) != -1:
+                new_Y48B6A = amino_acid[6].find("KGK", Y48B6A)
+    print("Y48B6A.10conceptual", Y48B6A)
+
+    C50H2 = 0
+    new_C50H2 = amino_acid[8].find("MTP", C50H2)
+    if new_C50H2 == 0:
+        C50H2 = 0
+    else:
+        C50H2 = len(amino_acid[8])
+    while C50H2 != new_C50H2:
+        if new_C50H2 < C50H2:
+            C50H2 = new_C50H2
+            if amino_acid[8].find("MTP", C50H2) != -1:
+                new_C50H2 = amino_acid[8].find("MTP", C50H2)
+    print("C50H2.7conceptual", C50H2)
 
 
-###################################################
-# main
-###################################################
-translate("human_haspin_FASTA.txt", "human_haspin_amino_acid.txt")
+    file = open("new_amino_acids.txt", "w")
+    file2 = open("amino_acids.txt", "r")
+    for line in file2:
+        if line == ">C01H6.9_hasp1_conceptual translation\n":
+            file.write(">C01H6.9_hasp1_conceptual translation " + str(C01H6) + "\n")
+            file.write(amino_acid[0] + "\n\n")
+        if line == ">Y18H1A.10_hasp2_conceptual translation\n":
+            file.write(">Y18H1A.10_hasp2_conceptual translation " + str(Y18H1A) + "\n")
+            file.write(amino_acid[1] + "\n\n")
+        if line == ">ZK177.2conceptual translation\n":
+            file.write(">ZK177.2conceptual translation " + str(ZK177) + "\n")
+            file.write(amino_acid[2] + "\n\n")
+        if line == ">C04G2.10aconceptual translation\n":
+            file.write(">C04G2.10aconceptual translation " + str(C04G2) + "\n")
+            file.write(amino_acid[3] + "\n\n")
+        if line == ">F59E12.6and15_combined\n":
+            file.write(">F59E12.6and15_combined " + str(F59E12) + "\n")
+            file.write(amino_acid[4] + "\n\n")
+        if line == ">Y73B6A.1aconceptual translation\n":
+            file.write(">Y73B6A.1aconceptual translation " + str(Y73B6A) + "\n")
+            file.write(amino_acid[5] + "\n\n")
+        if line == ">Y48B6A.10conceptual translation\n":
+            file.write(">Y48B6A.10conceptual translation " + str(Y48B6A) + "\n")
+            file.write(amino_acid[6] + "\n\n")
+        if line == ">H12I13.1conceptual translation\n":
+            file.write(">H12I13.1conceptual translation " + str(H12I13) + "\n")
+            file.write(amino_acid[7] + "\n\n")
+        if line == ">C50H2.7conceptual translation\n":
+            file.write(">C50H2.7conceptual translation " + str(C50H2) + "\n")
+            file.write(amino_acid[8] + "\n\n")
+        if line == ">C55C3.8conceptual translation\n":
+            file.write(">C55C3.8conceptual translation " + str(C55C3) + "\n")
+            file.write(amino_acid[9] + "\n\n")
+        if line == ">C26E6.1conceptual translation\n":
+            file.write(">C26E6.1conceptual translation " + str(C26E6) + "\n")
+            file.write(amino_acid[10] + "\n\n")
+        if line == ">Y32G9A.3conceptual translation\n":
+            file.write(">Y32G9A.3conceptual translation " + str(Y32G9A) + "\n")
+            file.write(amino_acid[11] + "\n\n")
+
+    file.close
+    file2.close
+
+
+##################################################################
+# testing
+##################################################################
+findIndex()
+
+
+
+
+
+
+
+
 
 
 

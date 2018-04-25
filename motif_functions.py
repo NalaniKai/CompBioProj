@@ -643,6 +643,7 @@ def testAnalyzeHaspins(filename, aminoMotifLength, numberRuns, amino):
     instances = findBestMotif(nucSeqs, aminoMotifLength*3, numberRuns, amino, False)
 
         
+<<<<<<< HEAD
 #testAnalyzeHaspins("ceHaspins_CloseRelatives_ExpressionList.txt", 10, 100, True)
     
 def testConsensus():
@@ -658,6 +659,10 @@ def testConsensus():
             
     #profile[2][5] = 0.3
     #profile[1][5] = 0.3
+=======
+#analyzeHaspins("ceHaspins_CloseRelatives_ExpressionList.txt", 10, 100, True)
+
+>>>>>>> 032690a614f5993fb897ab97d5f09eb87f5f92bb
     
     printMotifAmino(profile, len(profile))
     generateConsensusAmino(profile)
