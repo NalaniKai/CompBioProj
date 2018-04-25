@@ -10,7 +10,292 @@
 import random
 import math
 import time
+import sys
 
+##################################################################
+# generateSeqsFromFasta - takes a list of FASTA organized sequences
+# and store the sequences in an array
+##################################################################
+def generateSeqsFromFasta(filename):
+    # read in file
+    file = open(filename)
+
+    # read in entire file
+    allLines = file.readlines()
+    seqs = []
+    count = -1
+  
+    for i in range(len(allLines)):
+        if(allLines[i][0] == '>'):
+            seqs.append("")
+            count += 1
+        else:
+            seqs[count] += allLines[i]
+    
+    for i in range(len(seqs)):
+        seqs[i] = seqs[i].replace("\r", "")
+        seqs[i] = seqs[i].replace("\n", "")
+        
+    # close file
+    file.close()
+    
+    return seqs
+
+##########################################################
+# Suppose *sequence* is an Amino Acid sequence, and suppose
+# profile is organised such as:
+# profile[position in motif][amino acid], where
+# profile[0][0] would be 'F1', profile[0][1] would be 'L1',
+# profile[1][1] would be 'L2', etc...
+# Order of Amino Acids is "FLIMVSPTAYHQNKDECWRG"
+###########################################################
+def getBestMatchInAmino(sequence, profile, motifLength):
+    seq = sequence
+    bestMatch = 0
+    bestMatchIndex = 0
+    aminoAcids = ['F','L','I','M','V','S','P','T','A','Y','H','Q','N','K','D','E','C','W','R','G']
+
+    for i in range(len(sequence)-(motifLength+1)):
+        tempMatch = 1
+        
+        for j in range(motifLength):
+            for k in range(len(profile[j])):
+                if seq[i+j] == aminoAcids[k]:
+                    tempMatch = tempMatch*profile[j][k]
+            
+        if tempMatch > bestMatch:
+            bestMatch = tempMatch
+            bestMatchIndex = i
+    
+    return seq[bestMatchIndex:bestMatchIndex+motifLength]
+    
+###########################################################
+# Calculates and returns the frequency of the given
+# amino acid, aa, at given position in list of sequences
+# If frequency is 0, return .001 (so info content calculation is
+# well-defined)
+###########################################################
+def getFrequencyOfAminoAtPosition(aa, position, sequences):
+    count = 0.0
+    numSeqs = len(sequences)
+    
+    for i in range(numSeqs):
+        if sequences[i][position] == aa:
+            count += 1
+        
+    rtnVal = count/numSeqs
+    if rtnVal == 0:
+        rtnVal += .001
+    return rtnVal
+    
+###########################################################
+# Calculates and returns the information content of
+# a motif profile, given the values in the profile
+# Assumes background frequency of 100/20 = 5% for each nucleotide
+###########################################################
+def calcInfoContentAmino(profile):
+    # To calculate log base 2, use math.log(x, 2)
+    sum = 0.0
+    aminoAcids = ['F','L','I','M','V','S','P','T','A','Y','H','Q','N','K','D','E','C','W','R','G']
+    for i in range(len(profile)):    #uses length of F row of profile table
+        for j in range(len(aminoAcids)):
+            profileVal = profile[i][j]
+            sum += profileVal*math.log(profileVal/0.05, 2)
+    
+    return sum
+    
+#########################################################
+# Prints the specified motif model to the screen.
+#               1       2       3       4       ...
+#       F       F1      F2      F3      F4      ...
+#       L       L1      L2      L3      L4      ...
+#       I       I1      I2      I3      I4      ...
+#       ...     ...     ...     ...     ...     ...
+#########################################################
+def printMotifAmino(profile, motifLength):
+    line0 = ""
+    lines = []
+    aminoAcids = ['F','L','I','M','V','S','P','T','A','Y','H','Q','N','K','D','E','C','W','R','G']
+    for i in range(len(aminoAcids)):
+        lines.append(aminoAcids[i])
+
+    for i in range(motifLength):
+        line0 = line0 + "\t" + str(i)
+        for j in range(len(lines)):
+            lines[j] += "\t" + str("{0:.3f}".format(profile[i][j]))
+    
+    print(line0)
+    for i in range(len(lines)):
+        print(lines[i])
+    print()
+            
+##########################################################
+# Uses expectation-maximization algorithm for finding
+# the best motif in the any number of aa sequences
+##########################################################
+def findMotifAmino(sequences, motifLength):
+
+    numSeqs = len(sequences)
+    aminoAcids = ['F','L','I','M','V','S','P','T','A','Y','H','Q','N','K','D','E','C','W','R','G']
+    
+    # remember the motif instances from the previous iteration so we know when algorithm converges
+    old_instance = []
+    randomStart = []
+    instance = []
+    for i in range(numSeqs):
+        old_instance.append("")
+        randomStart.append(random.randint(0, len(sequences[i])-motifLength))
+        #print("randStart = " + str(randomStart[i]))
+        instance.append(sequences[i][randomStart[i]:randomStart[i]+motifLength])
+    
+    # repeat two steps of EM until convergence.
+    convergence = False
+    while(not convergence):    
+        #temp seq list to test getfrequency
+        seqs = []
+        for i in range(numSeqs):
+            seqs.append(instance[i])
+        
+        profile = []
+        for i in range(motifLength):
+            profile.append([])
+            for j in range(len(aminoAcids)):
+                profile[i].append(getFrequencyOfAminoAtPosition(aminoAcids[j], i, seqs))
+
+        # print the motif model to the screen (comment out when running findBestMotif)
+        #printMotifAmino(profile, motifLength)
+        
+        convergence = True
+        for i in range(numSeqs):
+            old_instance[i] = instance[i]   # re-assign old instances as the current instances to determine convergence
+            instance[i] = getBestMatchInSequence(sequences[i], profile, motifLength)    # find best match in each sequence (step 2 of EM) 
+            if(old_instance[i] != instance[i]):
+                convergence = False
+        
+    return profile
+    
+##################################################################
+# Scans through profile and returns list of consensus sequences
+##################################################################
+def generateConsensusAmino(profile):
+    aminoAcids = ['F','L','I','M','V','S','P','T','A','Y','H','Q','N','K','D','E','C','W','R','G']
+    consensusSeqs = []
+    consensusSeqs.append("")
+    for i in range(len(profile)):
+        maxVal = max(profile[i])
+        count = 0
+        oldNumSeqs = 1
+        for j in range(len(profile[i])):
+            if profile[i][j] == maxVal:
+                if count == 0:
+                    for k in range(len(consensusSeqs)):
+                        consensusSeqs[k] += aminoAcids[j]
+                    count += 1
+                    oldNumSeqs = len(consensusSeqs)
+                else:
+                    for k in range(oldNumSeqs):
+                        cutoff = len(consensusSeqs[k]) - 1
+                        consensusSeqs.append(consensusSeqs[k][0:cutoff] + aminoAcids[j])
+                        count += 1
+                    
+        
+    #print(consensusSeqs)
+    #print(len(consensusSeqs))
+    return consensusSeqs      
+    
+##################################################################
+# Scans through profile and returns list of consensus sequences
+##################################################################
+def consensusMatch(sequences, consensusSeqs):
+    matchScores = []
+    for i in range(len(sequences)):
+        bestScore = -10000
+        for j in range(len(consensusSeqs)):
+            score = blosumScore(sequences[i], consensusSeqs[j])
+            if score > bestScore:
+                bestScore = score
+        matchScores.append(bestScore)   
+    #print(matchScores)
+    return matchScores
+
+##################################################################
+# Blosum Compare two AA sequences
+##################################################################
+def blosumScore(seq1, seq2):
+    score = 0
+    
+    return score
+
+##################################################################
+# Runs findMotifAmino "repetition" number of times and returns the motif
+# with the highest information content
+# When calling this function, be sure to comment out
+# printing in the findMotif function
+##################################################################
+def findBestMotifAmino(sequences, motifLength, repetition, seqPrinting):
+    bestInfoContent = -10000000
+    
+    bestProfile = []
+    instance = []
+    
+    totalTime = 0
+    last10Time = 0
+    for i in range(repetition):
+        time1 = time.clock()
+        m = findMotifAmino(sequences, motifLength)
+        infoContent = calcInfoContentAmino(m)
+        #print(infoContent)
+
+        # keep best motif found so far
+        if infoContent > bestInfoContent:
+                bestProfile = m
+                bestInfoContent = infoContent
+        time2 = time.clock()
+        totalTime += (time2-time1)
+        last10Time += (time2-time1)
+        if(i % 10 == 0 and True):
+            #print(str(i) + "\t" + str(last10Time))
+            progress = float(i*100 / repetition)
+            etr = last10Time*(repetition/10)*(repetition-i)/(repetition)
+            if i != 0:
+                sys.stdout.write("Run Progress: %f%%, Estimated Time Remaining: %f seconds \r" % (progress, etr))
+                sys.stdout.flush()
+            else:
+                sys.stdout.write("Run Progress: %f%% \r" % progress)
+                sys.stdout.flush()
+            last10Time = 0
+        
+	
+    # display information about best motif
+    m = bestProfile
+    
+    # print best motif
+    printMotifAmino(m, motifLength)
+    
+    #generateConsensusAmino sequence
+    consensusSeqs = generateConsensusAmino(m)
+    
+    # find best match in each sequence   
+    for i in range(len(sequences)):
+        instance.append(getBestMatchInAmino(sequences[i], m, motifLength))
+        if(seqPrinting):
+            print(sequences[i] + "\t" + instance[i])
+
+    
+    #get best consensus match score for each instance
+    matchScores = consensusMatch(instance, consensusSeqs)
+    
+    # print runtime
+    print("Total Execution Time: " + "{0:.2f}".format(totalTime) + " seconds")
+    
+    # print info content
+    print ("\nInformation content: " + str(bestInfoContent)+ "\n")
+        
+    for i in range(len(instance)):
+        print(str(i) + "\t" + instance[i] + ", match score: " + str(matchScores[i]))
+        
+    return instance
+    
 ##########################################################
 # Suppose *sequence* is a DNA sequence, and suppose
 # profile is organised such as:
@@ -216,35 +501,6 @@ def findBestMotif(sequences, motifLength, repetition, amino, seqPrinting):
     return instance
 
 ##################################################################
-# generateSeqsFromFasta - takes a list of FASTA organized sequences
-# and store the sequences in an array
-##################################################################
-def generateSeqsFromFasta(filename):
-    # read in file
-    file = open(filename)
-
-    # read in entire file
-    allLines = file.readlines()
-    seqs = []
-    count = -1
-  
-    for i in range(len(allLines)):
-        if(allLines[i][0] == '>'):
-            seqs.append("")
-            count += 1
-        else:
-            seqs[count] += allLines[i]
-    
-    for i in range(len(seqs)):
-        seqs[i] = seqs[i].replace("\r", "")
-        seqs[i] = seqs[i].replace("\n", "")
-        
-    # close file
-    file.close()
-    
-    return seqs
-
-##################################################################
 # amino2bases - converts amino acids to nucleotide bases using 
 # only one of the possible nucleotide sequences, not accounting
 # for amino acids made by multiple base sequences
@@ -377,10 +633,8 @@ def test2():
         
 #test2()
 
-######################################
-# Run Functions Here
-######################################
-def analyzeHaspins(filename, aminoMotifLength, numberRuns, amino):
+#Test Original Code of converting to nucleotides before attempting motif finding
+def testAnalyzeHaspins(filename, aminoMotifLength, numberRuns, amino):
     aaSeqs = generateSeqsFromFasta(filename)
     nucSeqs = []
     for i in range(len(aaSeqs)):
@@ -389,7 +643,35 @@ def analyzeHaspins(filename, aminoMotifLength, numberRuns, amino):
     instances = findBestMotif(nucSeqs, aminoMotifLength*3, numberRuns, amino, False)
 
         
-analyzeHaspins("ceHaspins_CloseRelatives_ExpressionList.txt", 10, 100, True)
+#testAnalyzeHaspins("ceHaspins_CloseRelatives_ExpressionList.txt", 10, 100, True)
     
+def testConsensus():
+    profile = []
+    aminoAcids = ['F','L','I','M','V','S','P','T','A','Y','H','Q','N','K','D','E','C','W','R','G']
+    for i in range(3):
+        profile.append([])
+        for j in range(len(aminoAcids)):
+            if(j < 3):
+                profile[i].append(0.25)
+            else:
+                profile[i].append(0.1)
+            
+    #profile[2][5] = 0.3
+    #profile[1][5] = 0.3
     
+    printMotifAmino(profile, len(profile))
+    generateConsensusAmino(profile)
+
+#testConsensus()
+        
+######################################
+# Run Functions Here
+######################################
+def analyzeHaspins(filename, motifLength, numberRuns):
+    aaSeqs = generateSeqsFromFasta(filename)
+    printFullSeqs = False
+    instances = findBestMotifAmino(aaSeqs, motifLength, numberRuns, printFullSeqs)
+
+analyzeHaspins("ceHaspins_CloseRelatives_ExpressionList.txt", 5, 10)
+        
 
