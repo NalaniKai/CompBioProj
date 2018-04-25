@@ -3,6 +3,10 @@
 import random
 import math
 
+"""
+
+"""
+
 def hertzStormo(aminoAcid, singleton, singletonSeq, singletonI, seqs, headers):
     size = len(singleton)
     nMerSet = []
@@ -17,18 +21,22 @@ def hertzStormo(aminoAcid, singleton, singletonSeq, singletonI, seqs, headers):
 
     doneSeqs = [singletonSeq]
 
+    mini = math.floor(float(len(bestSet[0]))/4.0)+1
+
     for x in range(len(seqs)-1):
         addIC, addSet, addHeaders, addLocations, addSeq = iteration(seqs, headers, bestSet, doneSeqs, aminoAcid, size)
-        bestHeaders.append(addHeaders)
-        bestIC = addIC
-        bestLocations.append(addLocations)
-        bestSet.append(addSet)
-        doneSeqs.append(addSeq)
+        same = 0
+        for c in range(len(addSet)):
+            if addSet[c] == bestSet[0][c]:
+                same += 1
+        if same >= mini:
+            bestHeaders.append(addHeaders)
+            bestIC = addIC
+            bestLocations.append(addLocations)
+            bestSet.append(addSet)
+            doneSeqs.append(addSeq)
 
-    print("best ", bestIC)
-    print("best set ", bestSet)     
-    print("best headers ", bestHeaders)  
-    print("done seq ", doneSeqs)  
+    return bestIC, bestSet, bestHeaders
 
 def iteration(seqs, headers, currentSet, doneSeqs, aminoAcid, size):    
     bestNMer = ""
@@ -127,7 +135,7 @@ def getAvg(seqs, col):
         avgs[i] = avgs[i]/len(seqs)
     return avgs
 
-def findPhosSiteMotif(sequences, headers):    
+def findPhosSiteMotif(sequences, headers, longest, shortest):    
     seqsLen = len(sequences)
     for i in range(seqsLen + 3):
         r = random.randint(0, seqsLen-1)
@@ -136,7 +144,7 @@ def findPhosSiteMotif(sequences, headers):
             for aminoAcid in range(len(s)):                
                 #phosphorolation sites
                 if s[aminoAcid] == 'S' or s[aminoAcid] == 'Y' or s[aminoAcid] == 'T':
-                    motif = getMotif(s, s[aminoAcid])
+                    motif = getMotif(s, s[aminoAcid], longest, shortest)
                     l = len(motif)
                     if l > 4:
                         motifSeqs = []
@@ -154,13 +162,13 @@ def findPhosSiteMotif(sequences, headers):
                         return s[aminoAcid], motif, motifSeq, aminoAcid, motifSeqs, motifHeaders    
     return None, None, None
 
-def getMotif(seq, aminoAcid):
+def getMotif(seq, aminoAcid, l , s):
     i = seq.index(aminoAcid)
     front = 500
     back = 500
-    while ((i-front) < 2) or ((i+back) >= len(seq)):
-        front = random.randint(0,5)
-        back = random.randint(0,5)
+    while ((i-front) < 2) or ((i+back) >= len(seq)) or len(seq[i-front:i+back]) < s:
+        front = random.randint(0,l)
+        back = random.randint(0,l)
     return seq[i-front:i+back]
 
 def getNumPhosphorolationSites(sequences):
@@ -221,6 +229,9 @@ def convertFileToSequences(filename):
         while line:
             tempSeq = ""
             i = line.index('(')
+            if i == -1:
+                print("Sorry, file is in wrong format. Exiting now.")
+                return
             NT_end = int(line[i+1:len(line)-2])
             headers.append(line[:len(line)-1])
             line = f.readline()
@@ -236,8 +247,36 @@ def convertFileToSequences(filename):
 
     return seqs, headers
 
-seqs, headers = convertFileToSequences("new_amino_acids.txt")
-#getNumPhosphorolationSites(seqs)
-aminoAcid, motif, motifSeq, motifI, seqs, headers = findPhosSiteMotif(seqs, headers)
-print(motif)
-hertzStormo(aminoAcid, motif, motifSeq, motifI, seqs, headers)
+def setHeader(filename):
+    with open(filename, "w") as f:
+        f.write("Output for NT phosphorolation sites.\n")
+
+def writeData(filename, sets, headers):
+    with open(filename, 'a') as f:
+        f.write("\n----------- motif "+sets[0]+"-----------\n")
+        for i in range(len(sets)):
+            f.write(headers[i]+"\n"+sets[i]+"\n")
+
+inputfile = input("What data file would you like to use? ")
+outputfile = "output_NT_phos_" + inputfile
+longestMotifSize = int(input("What is the longest motif length you want? "))
+shortestMotifSize = int(input("What is the shortest motif length you want? "))
+numberOfMatches = int(input("What is the least number of occurances you are intested in for each motif? "))
+while longestMotifSize < shortestMotifSize or longestMotifSize < 1 or shortestMotifSize < 1 or numberOfMatches < 1:
+    print("\nSorry, the last three inputs don't make sense. Try again.\n")
+    longestMotifSize = int(input("What is the longest motif length you want? "))
+    shortestMotifSize = int(input("What is the shortest motif length you want? "))
+    numberOfMatches = int(input("What is the least number of occurances you are intested in for each motif? "))
+
+setHeader(outputfile)
+seqs, headers = convertFileToSequences(inputfile)
+motifsSoFar = []
+for x in range(10):
+    aminoAcid, motif, motifSeq, motifI, seqs, headers = findPhosSiteMotif(seqs, headers, longestMotifSize, shortestMotifSize)
+    if motif not in motifsSoFar:
+        bestIC, bestSet, bestHeaders = hertzStormo(aminoAcid, motif, motifSeq, motifI, seqs, headers)
+        if len(bestSet) >= numberOfMatches:
+            writeData(outputfile, bestSet, bestHeaders)
+        motifsSoFar.append(motif)
+
+print("\nDone finding motifs. To see your results, please open " + outputfile)

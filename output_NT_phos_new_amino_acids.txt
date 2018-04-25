@@ -1,0 +1,79 @@
+Output for NT phosphorolation sites.
+
+----------- motif SRDDVIIG-----------
+>F59E12.6and15_combined (442)
+SRDDVIIG
+>C01H6.9_hasp1_conceptual translation (465)
+SLDDVSLE
+
+----------- motif VVDILEISIQ-----------
+>ZK177.2conceptual translation (15)
+VVDILEISIQ
+>H12I13.1conceptual translation (278)
+VVDVPGISLP
+>Y73B6A.1aconceptual translation (53)
+VLSVLESSDS
+>C01H6.9_hasp1_conceptual translation (465)
+VSDVEISSDE
+>F59E12.6and15_combined (442)
+ESDTLAQSES
+
+----------- motif KPRIKVPISPG-----------
+>C01H6.9_hasp1_conceptual translation (465)
+KPRIKVPISPG
+>F59E12.6and15_combined (442)
+CSRDDVIIGQG
+>Y48B6A.10conceptual translation (74)
+SSFHKEYLSIG
+>H12I13.1conceptual translation (278)
+SMESLNYPSPG
+
+----------- motif TNTLYSS-----------
+>Y48B6A.10conceptual translation (74)
+TNTLYSS
+>C01H6.9_hasp1_conceptual translation (465)
+CPTNYAS
+>F59E12.6and15_combined (442)
+SDTLAQS
+>H12I13.1conceptual translation (278)
+METLSAN
+>Y73B6A.1aconceptual translation (53)
+RKTGKSI
+
+----------- motif LGKTNTLYSSF-----------
+>Y48B6A.10conceptual translation (74)
+LGKTNTLYSSF
+>C01H6.9_hasp1_conceptual translation (465)
+QVQCPTNYASF
+>H12I13.1conceptual translation (278)
+PFVRTTFYANF
+
+----------- motif AGFWSAAYAEMP-----------
+>H12I13.1conceptual translation (278)
+AGFWSAAYAEMP
+>F59E12.6and15_combined (442)
+ASACLLVYAKMD
+
+----------- motif RLGKTNTLYSSF-----------
+>Y48B6A.10conceptual translation (74)
+RLGKTNTLYSSF
+>C01H6.9_hasp1_conceptual translation (465)
+NQVQCPTNYASF
+
+----------- motif NGSRKTG-----------
+>Y73B6A.1aconceptual translation (53)
+NGSRKTG
+>F59E12.6and15_combined (442)
+TGSSKTA
+>H12I13.1conceptual translation (278)
+TGSDDTS
+>C01H6.9_hasp1_conceptual translation (465)
+VFSPKTQ
+>Y48B6A.10conceptual translation (74)
+LESLKKQ
+
+----------- motif CRHNAGFWSAAY-----------
+>H12I13.1conceptual translation (278)
+CRHNAGFWSAAY
+>C01H6.9_hasp1_conceptual translation (465)
+MRQNKKASLAAP
