@@ -11,6 +11,7 @@ import random
 import math
 import time
 import sys
+import re
 
 ##################################################################
 # generateSeqsFromFasta - takes a list of FASTA organized sequences
@@ -40,6 +41,41 @@ def generateSeqsFromFasta(filename):
     file.close()
     
     return seqs
+    
+##################################################################
+# generateSeqsWithCutoffs - takes a list of FASTA organized sequences
+# with cutoff points indicated by a (##) at the end of the ">..." line
+# and returns the sequences from the FASTA file cut to that length
+##################################################################
+def generateSeqsWithCutoffs(filename):
+    # read in file
+    file = open(filename)
+
+    # read in entire file
+    allLines = file.readlines()
+    seqs = []
+    count = -1
+    seqCuts = []
+  
+    for i in range(len(allLines)):
+        if(allLines[i][0] == '>'):
+            seqs.append("")
+            count += 1
+            m = re.search('>.*\(([0-9]*)\)', allLines[i])
+            #print(m.group(1))
+            seqCuts.append(m.group(1))
+        else:
+            seqs[count] += allLines[i]
+    
+    for i in range(len(seqs)):
+        seqs[i] = seqs[i][0:int(seqCuts[i])]
+        seqs[i] = seqs[i].replace("\r", "")
+        seqs[i] = seqs[i].replace("\n", "")
+        
+    # close file
+    file.close()
+    
+    return seqs
 
 ##########################################################
 # Suppose *sequence* is an Amino Acid sequence, and suppose
@@ -55,7 +91,7 @@ def getBestMatchInAmino(sequence, profile, motifLength):
     bestMatchIndex = 0
     aminoAcids = ['F','L','I','M','V','S','P','T','A','Y','H','Q','N','K','D','E','C','W','R','G']
 
-    for i in range(len(sequence)-(motifLength+1)):
+    for i in range(len(sequence)-motifLength+1):
         tempMatch = 1
         
         for j in range(motifLength):
@@ -204,27 +240,90 @@ def generateConsensusAmino(profile):
     return consensusSeqs      
     
 ##################################################################
-# Scans through profile and returns list of consensus sequences
+# Calculates the best match in list of consensus seqs and returns 
+# information about best matches
+# returnInfo - decides what gets returned
+# >>> "Score": scores
+# >>> "Sequence": sequences
 ##################################################################
-def consensusMatch(sequences, consensusSeqs):
+def consensusMatch(sequences, consensusSeqs, returnInfo):
     matchScores = []
+    matchSeqs = []
     for i in range(len(sequences)):
         bestScore = -10000
+        bestConSeq = 0
         for j in range(len(consensusSeqs)):
             score = blosumScore(sequences[i], consensusSeqs[j])
             if score > bestScore:
                 bestScore = score
-        matchScores.append(bestScore)   
+                bestConSeq = j
+                #print("Matching: " + sequences[i] + " with " + consensusSeqs[j])
+        matchScores.append(bestScore)
+        matchSeqs.append(consensusSeqs[bestConSeq])
     #print(matchScores)
-    return matchScores
+    
+    if(returnInfo == "Score"):
+        return matchScores
+    elif(returnInfo == "Sequence"):
+        return matchSeqs
+    else:
+        print("ERROR: consensusMatch - invalid returnInfo parameter\n")
+        return "ERROR"
 
 ##################################################################
 # Blosum Compare two AA sequences
 ##################################################################
 def blosumScore(seq1, seq2):
-    score = 0
+    sum = 0
+    mat = readMatrix("BLOSUM62.txt")
     
-    return score
+    #If seqs are not equal length, return 0
+    if(len(seq1) != len(seq2)):
+        return 0
+    
+    # note: mat is a list of 2 items: the 2D score array and
+    # the 1D legend of amino acid characters
+    # to get the index of "A" in the legend, you can write
+    # mat[1].index("A")
+    for x in range(len(seq1)):
+        let1 = seq1[x]
+        let2 = seq2[x]
+        score = mat[0][mat[1].index(let1)][mat[1].index(let2)]
+        sum = sum + score
+    
+    return sum
+
+#############################################################
+# readMatrix
+# read data from file and store into score matrix
+# returns score matrix as 2D array and the amino acid table order
+# (completed for you)
+#############################################################
+def readMatrix(inputFile):
+    # create 2D scoring matrix 24 x 24 (20 AAs, plus non-determinates)
+    score = [[0 for x in range(24)] for x in range(24)]
+    
+    f = open(inputFile)
+
+    # remove top six lines of comments plus row of AAs from BLOSUM 62 file
+    for i in range(6):
+        f.readline()
+
+    # create array for the order of amino acids
+    legend = f.readline().split()
+    
+    # assign values in score
+    row = 0
+    for line in f:
+        # parse the line
+        items = line.split()  #splits on whitespace
+        # first value in item is the amino acid letter, so we want to
+        # ignore it by starting index at 1
+        for i in range(1,len(items)):
+            score[row][i-1] = int(items[i])
+        row+=1
+    # return both the 2D table of scores and the 1D legend of the AA order
+    return [score, legend]
 
 ##################################################################
 # Runs findMotifAmino "repetition" number of times and returns the motif
@@ -283,7 +382,8 @@ def findBestMotifAmino(sequences, motifLength, repetition, seqPrinting):
 
     
     #get best consensus match score for each instance
-    matchScores = consensusMatch(instance, consensusSeqs)
+    matchScores = consensusMatch(instance, consensusSeqs, "Score")
+    matchSeqs = consensusMatch(instance, consensusSeqs, "Sequence")
     
     # print runtime
     print("Total Execution Time: " + "{0:.2f}".format(totalTime) + " seconds")
@@ -292,7 +392,7 @@ def findBestMotifAmino(sequences, motifLength, repetition, seqPrinting):
     print ("\nInformation content: " + str(bestInfoContent)+ "\n")
         
     for i in range(len(instance)):
-        print(str(i) + "\t" + instance[i] + ", match score: " + str(matchScores[i]))
+        print(str(i) + "\t" + instance[i] + ", match score: " + str(matchScores[i]) + "\t(" + str(matchSeqs[i]) + ")")
         
     return instance
     
@@ -655,10 +755,36 @@ def testConsensus():
             else:
                 profile[i].append(0.1)
             
-    #profile[2][5] = 0.3
-    #profile[1][5] = 0.3
-
+    profile[2][5] = 0.3
+    profile[1][5] = 0.3
+    
+    printMotifAmino(profile, len(profile))
+    consensusSeqs = generateConsensusAmino(profile)
+    print("Con Seqs: " + str(consensusSeqs))
+    
+    testSeqs = ["FLLLLL", "FSS", "AYHNSDNNKSD", "TAYQLSS"]
+    
+    # find best match in each sequence   
+    instance = []
+    for i in range(len(testSeqs)):
+        instance.append(getBestMatchInAmino(testSeqs[i], profile, 3))
+        print(instance[i])
+    
+    #get best consensus match score for each instance
+    matchScores = consensusMatch(instance, consensusSeqs, "Score")
+    matchSeqs = consensusMatch(instance, consensusSeqs, "Sequence")
+    
+    for i in range(len(instance)):
+        print(str(i) + "\t" + instance[i] + ", match score: " + str(matchScores[i]) + "(" + str(matchSeqs[i]) + ")")
+        
+        
 #testConsensus()
+
+def testSeqCuts():
+    aaSeqs = generateSeqsWithCutoffs("new_amino_acids.txt")
+    print(aaSeqs)
+    
+#testSeqCuts()
         
 ######################################
 # Run Functions Here
