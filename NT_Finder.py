@@ -1,8 +1,5 @@
 
 ########################################################
-# convertFileToSequence -- converts FASTA file to string
-# from lab 1
-# Exercise 0
 # convertFileToSequence - takes a FASTA file and returns the
 # DNA sequence as a string
 #######################################################
@@ -32,8 +29,9 @@ def convertFileToSequence(filename):
     return sequence
 
 ########################################################
-# translate -- translate each DNA codon to the corresponding
-# single letter amino acid sequence
+# translate -- given the input file, translate each DNA
+# codon to the corresponding amino acid sequence and writing
+# it out to the given output file
 #######################################################
 def translate(inputfile, outputfile):
     # convert the input file to a string
@@ -152,16 +150,15 @@ def generateSeqsFromFasta(filename):
         seqs[i] = seqs[i].replace("\r", "")
         seqs[i] = seqs[i].replace("\n", "")
 
-#    for i in range(len(seqs)):
-#        print(seqs[i], "\n")
-
     # close file
     file.close()
     
     return seqs
 
 ##################################################################
-# findIndex: finds the leftmost index of each organism
+# findIndex - finds the index of the beginning of the C-terminus and
+# writes it to the end of the first line for each organism in the file
+# 'new_amino_acids.txt'
 ##################################################################
 def findIndex():
     translate("human_haspin_FASTA.txt", "human_haspin_amino_acid.txt")
