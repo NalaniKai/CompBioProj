@@ -345,40 +345,40 @@ def findIndex():
     file2 = open("amino_acids.txt", "r")
     for line in file2:
         if line == ">C01H6.9_hasp1_conceptual translation\n":
-            file.write(">C01H6.9_hasp1_conceptual translation " + str(C01H6) + "\n")
+            file.write(">C01H6.9_hasp1_conceptual translation (" + str(C01H6) + ")\n")
             file.write(amino_acid[0] + "\n\n")
         if line == ">Y18H1A.10_hasp2_conceptual translation\n":
-            file.write(">Y18H1A.10_hasp2_conceptual translation " + str(Y18H1A) + "\n")
+            file.write(">Y18H1A.10_hasp2_conceptual translation (" + str(Y18H1A) + ")\n")
             file.write(amino_acid[1] + "\n\n")
         if line == ">ZK177.2conceptual translation\n":
-            file.write(">ZK177.2conceptual translation " + str(ZK177) + "\n")
+            file.write(">ZK177.2conceptual translation (" + str(ZK177) + ")\n")
             file.write(amino_acid[2] + "\n\n")
         if line == ">C04G2.10aconceptual translation\n":
-            file.write(">C04G2.10aconceptual translation " + str(C04G2) + "\n")
+            file.write(">C04G2.10aconceptual translation (" + str(C04G2) + ")\n")
             file.write(amino_acid[3] + "\n\n")
         if line == ">F59E12.6and15_combined\n":
-            file.write(">F59E12.6and15_combined " + str(F59E12) + "\n")
+            file.write(">F59E12.6and15_combined (" + str(F59E12) + ")\n")
             file.write(amino_acid[4] + "\n\n")
         if line == ">Y73B6A.1aconceptual translation\n":
-            file.write(">Y73B6A.1aconceptual translation " + str(Y73B6A) + "\n")
+            file.write(">Y73B6A.1aconceptual translation (" + str(Y73B6A) + ")\n")
             file.write(amino_acid[5] + "\n\n")
         if line == ">Y48B6A.10conceptual translation\n":
-            file.write(">Y48B6A.10conceptual translation " + str(Y48B6A) + "\n")
+            file.write(">Y48B6A.10conceptual translation (" + str(Y48B6A) + ")\n")
             file.write(amino_acid[6] + "\n\n")
         if line == ">H12I13.1conceptual translation\n":
-            file.write(">H12I13.1conceptual translation " + str(H12I13) + "\n")
+            file.write(">H12I13.1conceptual translation (" + str(H12I13) + ")\n")
             file.write(amino_acid[7] + "\n\n")
         if line == ">C50H2.7conceptual translation\n":
-            file.write(">C50H2.7conceptual translation " + str(C50H2) + "\n")
+            file.write(">C50H2.7conceptual translation (" + str(C50H2) + ")\n")
             file.write(amino_acid[8] + "\n\n")
         if line == ">C55C3.8conceptual translation\n":
-            file.write(">C55C3.8conceptual translation " + str(C55C3) + "\n")
+            file.write(">C55C3.8conceptual translation (" + str(C55C3) + ")\n")
             file.write(amino_acid[9] + "\n\n")
         if line == ">C26E6.1conceptual translation\n":
-            file.write(">C26E6.1conceptual translation " + str(C26E6) + "\n")
+            file.write(">C26E6.1conceptual translation (" + str(C26E6) + ")\n")
             file.write(amino_acid[10] + "\n\n")
         if line == ">Y32G9A.3conceptual translation\n":
-            file.write(">Y32G9A.3conceptual translation " + str(Y32G9A) + "\n")
+            file.write(">Y32G9A.3conceptual translation (" + str(Y32G9A) + ")\n")
             file.write(amino_acid[11] + "\n\n")
 
     file.close
