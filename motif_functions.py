@@ -453,7 +453,168 @@ def findBestMotifAmino(sequences, names, motifLength, repetition, seqPrinting):
     for i in range(len(instance)):
         print(names[i] + "\t" + instance[i] + ", match score: " + str(matchScores[i]) + "\t(Consensus Sequence: " + str(matchSeqs[i]) + ")")
         
+    file = open("NT_Motif_Results.txt")
+    
+        
     return instance
+    
+##################################################################
+# Runs findMotif "repetition" number of times and returns the motif
+# with the highest information content
+# When calling this function, be sure to comment out
+# printing in the findMotif function
+# amino - boolean for whether giving AA or nucleotide sequences
+# seqPrinting - whether or not full sequence is printed
+##################################################################
+def findBestMotif(sequences, motifLength, repetition, amino, seqPrinting):
+    bestInfoContent = -10000000
+    
+    bestProfile = []
+    instance = []
+    
+    totalTime = 0
+    last10Time = 0
+    for i in range(repetition):
+        time1 = time.clock()
+        m = findMotif(sequences, motifLength, amino)
+        infoContent = calcInfoContent(m)
+        #print(infoContent)
+
+        # keep best motif found so far
+        if infoContent > bestInfoContent:
+                bestProfile = m
+                bestInfoContent = infoContent
+        time2 = time.clock()
+        totalTime += (time2-time1)
+        last10Time += (time2-time1)
+        if(i % 10 == 0 and True):
+            print(str(i) + "\t" + str(last10Time))
+            last10Time = 0
+	
+    # display information about best motif
+    m = bestProfile
+    
+    # print best motif
+    if(seqPrinting):
+        printMotif(m, motifLength)
+
+    # find best match in each sequence   
+    for i in range(len(sequences)):
+        instance.append(getBestMatchInSequence(sequences[i], m, motifLength))
+        if(seqPrinting):
+            print(sequences[i] + "\t" + instance[i])
+
+    # print runtime
+    print("Total Execution Time: " + "{0:.2f}".format(totalTime) + " seconds")
+    
+    # print info content
+    print ("\nInformation content: " + str(bestInfoContent)+ "\n")
+        
+    for i in range(len(instance)):
+        print(str(i) + "\t" + instance[i] + "\t" + base2amino(instance[i]))
+        
+    return instance
+
+##################################################################
+# amino2bases - converts amino acids to nucleotide bases using 
+# only one of the possible nucleotide sequences, not accounting
+# for amino acids made by multiple base sequences
+##################################################################
+def amino2bases(aaSeq):
+    nucSeq = ""
+    for i in range(len(aaSeq)):
+        if aaSeq[i] == 'F':
+            nucSeq += 'UUU'
+        elif aaSeq[i] == 'L':
+            nucSeq += 'UUA'
+        elif aaSeq[i] == 'I':
+            nucSeq += 'AUU'
+        elif aaSeq[i] == 'M':
+            nucSeq += 'AUG'
+        elif aaSeq[i] == 'V':
+            nucSeq += 'GUU'
+        elif aaSeq[i] == 'S':
+            nucSeq += 'UCU'
+        elif aaSeq[i] == 'P':
+            nucSeq += 'CCU'
+        elif aaSeq[i] == 'T':
+            nucSeq += 'ACU'
+        elif aaSeq[i] == 'A':
+            nucSeq += 'GCU'
+        elif aaSeq[i] == 'Y':
+            nucSeq += 'UAU'
+        elif aaSeq[i] == 'H':
+            nucSeq += 'CAU'
+        elif aaSeq[i] == 'Q':
+            nucSeq += 'CAA'
+        elif aaSeq[i] == 'N':
+            nucSeq += 'AAU'
+        elif aaSeq[i] == 'K':
+            nucSeq += 'AAA'
+        elif aaSeq[i] == 'D':
+            nucSeq += 'GAU'
+        elif aaSeq[i] == 'E':
+            nucSeq += 'GAA'
+        elif aaSeq[i] == 'C':
+            nucSeq += 'UGU'
+        elif aaSeq[i] == 'W':
+            nucSeq += 'UGG'
+        elif aaSeq[i] == 'R':
+            nucSeq += 'AGA'
+        elif aaSeq[i] == 'G':
+            nucSeq += 'GGU'
+    return nucSeq
+    
+##################################################################
+# bases2amino - complement of amino2bases to reverse the processing
+##################################################################
+def base2amino(nucSeq):
+    aaSeq = ""
+    length = len(nucSeq)
+    i = 0
+    while (i + 3 <= length):
+        if nucSeq[i:i+3] == 'UUU':
+            aaSeq += 'F'
+        elif nucSeq[i:i+3] == 'UUA':
+            aaSeq += 'L'
+        elif nucSeq[i:i+3] == 'AUU':
+            aaSeq += 'I'
+        elif nucSeq[i:i+3] == 'AUG':
+            aaSeq += 'M'
+        elif nucSeq[i:i+3] == 'GUU':
+            aaSeq += 'V'
+        elif nucSeq[i:i+3] == 'UCU':
+            aaSeq += 'S'
+        elif nucSeq[i:i+3] == 'CCU':
+            aaSeq += 'P'
+        elif nucSeq[i:i+3] == 'ACU':
+            aaSeq += 'T'
+        elif nucSeq[i:i+3] == 'GCU':
+            aaSeq += 'A'
+        elif nucSeq[i:i+3] == 'UAU':
+            aaSeq += 'Y'
+        elif nucSeq[i:i+3] == 'CAU':
+            aaSeq += 'H'
+        elif nucSeq[i:i+3] == 'CAA':
+            aaSeq += 'Q'
+        elif nucSeq[i:i+3] == 'AAU':
+            aaSeq += 'N'
+        elif nucSeq[i:i+3] == 'AAA':
+            aaSeq += 'K'
+        elif nucSeq[i:i+3] == 'GAU':
+            aaSeq += 'D'
+        elif nucSeq[i:i+3] == 'GAA':
+            aaSeq += 'E'
+        elif nucSeq[i:i+3] == 'UGU':
+            aaSeq += 'C'
+        elif nucSeq[i:i+3] == 'UGG':
+            aaSeq += 'W'
+        elif nucSeq[i:i+3] == 'AGA':
+            aaSeq += 'R'
+        elif nucSeq[i:i+3] == 'GGU':
+            aaSeq += 'G'
+        i += 3
+    return aaSeq
 
 ##################################################################################################################
 # Testing
