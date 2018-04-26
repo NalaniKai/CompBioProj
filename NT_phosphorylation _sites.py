@@ -428,7 +428,7 @@ seqs, headers = convertFileToSequences(inputfile)
 
 #Run hertx stormo with various singletons to get motifs and their matches
 motifsSoFar = []
-for x in range(30):
+for x in range(100):
     #get a singleton
     aminoAcid, motif, motifSeq, motifI, seqs, headers = findPhosSiteMotif(seqs, headers, longestMotifSize, shortestMotifSize)
 
