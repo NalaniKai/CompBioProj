@@ -1,0 +1,1 @@
+Output for NT phosphorolation sites from new_amino_acid.txt
