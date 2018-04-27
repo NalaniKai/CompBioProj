@@ -452,19 +452,71 @@ def findBestMotifAmino(sequences, names, motifLength, repetition, seqPrinting):
         
     for i in range(len(instance)):
         print(names[i] + "\t" + instance[i] + ", match score: " + str(matchScores[i]) + "\t(Consensus Sequence: " + str(matchSeqs[i]) + ")")
-        
-    file = open("NT_Motif_Results.txt")
-    
-        
+                
+    saveToFile(m, names, instance, matchSeqs, matchScores, motifLength)
     return instance
-    
+  
 ##################################################################
-# Runs findMotif "repetition" number of times and returns the motif
-# with the highest information content
-# When calling this function, be sure to comment out
-# printing in the findMotif function
-# amino - boolean for whether giving AA or nucleotide sequences
-# seqPrinting - whether or not full sequence is printed
+# saveToFile -   gets run in findBestMotifAmino, saves console ouptput to 
+#                text file for bio faculty
+# profile: generated motif profile
+# names: list of sequence names
+# instance: list of best match instances
+# conSensusSeq: list of matched consensus sequence
+# matchScores: list of score of matched seq
+# motifLength: length of motif
+#
+# No Return
+# 
+# Output File: "NT_Motifs_Results.txt" - saves version of console output for easy reading by bio faculty
+##################################################################  
+def saveToFile(profile, names, instance, conSensusSeq, matchScores, motifLength):
+    file = open("NT_Motifs_Results.txt", "w")
+    
+    file.write("Output Results of Motif Finding Algorithm\n")
+    file.write("->Motif Length = " + str(motifLength) + "\n")
+    file.write("->NT sections with a sequence length of less than the Motif Length are not displayed\n\n")
+    
+    file.write("Generated Motif Profile:\n")
+    line0 = ""
+    lines = []
+    aminoAcids = ['F','L','I','M','V','S','P','T','A','Y','H','Q','N','K','D','E','C','W','R','G']
+    for i in range(len(aminoAcids)):
+        lines.append(aminoAcids[i])
+
+    for i in range(motifLength):
+        line0 = line0 + "\t\t" + str(i)
+        for j in range(len(lines)):
+            lines[j] += "\t" + str("{0:.3f}".format(profile[i][j]))
+    
+    file.write(line0 + "\n")
+    for i in range(len(lines)):
+        file.write(lines[i] + "\n")
+        
+    file.write("\nInformation Content: " + str(calcInfoContentAmino(profile)) + "\n")
+    file.write("\nBest Matching Motif in each sequence:\n")
+    for i in range(len(names)):
+        formattedName = re.search(r">(.*?)\(.*\)", names[i]).group(1)
+        file.write("\t" + formattedName + "\n")
+        file.write("\t-->Best Matching Subsequence: " + instance[i] + "\n")
+        file.write("\t-->BLOSUM62 Match Score: " + str(matchScores[i]) + "\n")
+        file.write("\t-->Consensus Sequence Matched: " + conSensusSeq[i] + "\n\n")
+        
+    file.close()
+    
+
+##################################################################
+# findBestMotif -   Runs findMotif "repetition" number of times and returns the motif
+#                   with the highest information content
+#                   When calling this function, be sure to comment out
+#                   printing in the findMotif function
+# sequences: list of sequences
+# motifLength: desired motiflength
+# repetition: number of runs to perform EM on to get best result
+# amino: boolean for whether giving AA or nucleotide sequences
+# seqPrinting: whether or not full sequence is printed
+#
+# return: list of best matching indices
 ##################################################################
 def findBestMotif(sequences, motifLength, repetition, amino, seqPrinting):
     bestInfoContent = -10000000
@@ -516,9 +568,12 @@ def findBestMotif(sequences, motifLength, repetition, amino, seqPrinting):
     return instance
 
 ##################################################################
-# amino2bases - converts amino acids to nucleotide bases using 
-# only one of the possible nucleotide sequences, not accounting
-# for amino acids made by multiple base sequences
+# amino2bases -     converts amino acids to nucleotide bases using 
+#                   only one of the possible nucleotide sequences, not accounting
+#                   for amino acids made by multiple base sequences
+# aaSeq: an amino acid sequence
+#
+# return: a nucleotide sequence
 ##################################################################
 def amino2bases(aaSeq):
     nucSeq = ""
@@ -567,6 +622,9 @@ def amino2bases(aaSeq):
     
 ##################################################################
 # bases2amino - complement of amino2bases to reverse the processing
+# nucSeq: nucleotide sequence
+#
+# return: amino acid sequence
 ##################################################################
 def base2amino(nucSeq):
     aaSeq = ""
@@ -706,8 +764,6 @@ def testAnalyzeHaspins(filename, motifLength, numberRuns):
 # numberRuns: number of repetitions to put into findBestMotifAmino
 #
 # No Return 
-#
-# Output File: ".txt" - saves version of console output for easy reading by bio faculty
 ######################################
 def analyzeWithCutoffs(filename, motifLength, numberRuns):
     aaSeqs = generateSeqsWithCutoffs(filename, "Sequences")
@@ -721,5 +777,5 @@ def analyzeWithCutoffs(filename, motifLength, numberRuns):
     printFullSeqs = False
     instances = findBestMotifAmino(relevantSeqs, relevantNames, motifLength, numberRuns, printFullSeqs)
     
-analyzeWithCutoffs("new_amino_acids.txt", 6, 100)   
+analyzeWithCutoffs("new_amino_acids.txt", 10, 10000)   
 
